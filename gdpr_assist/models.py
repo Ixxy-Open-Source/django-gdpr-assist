@@ -187,7 +187,15 @@ class PrivacyModel(models.Model):
     An abstract model base class with support for anonymising data
     """
     anonymised = models.BooleanField(default=False)
-
+    
+    @property
+    def anonymised(self):
+        return False
+    
+    @anonymised.setter
+    def anonymised(self, value):
+        pass
+    
     def anonymise(self, force=False):
         # Only anonymise things once to avoid a circular anonymisation
         if self.anonymised and not force:
@@ -229,12 +237,14 @@ class PrivacyModel(models.Model):
         """
         # Make the model subclass PrivacyModel
         model.__bases__ = (PrivacyModel,) + model.__bases__
-
+        
+        # Changed in our fork.
+        # We do not add an 'anonymised' field to the Model class.
         # Tell the field it's now a member of the new model
         # We need to do this manually, as the base class has been added after
         # the class thinks it has been prepared
-        field = copy(PrivacyModel._meta.get_field('anonymised'))
-        field.contribute_to_class(model, 'anonymised')
+        # field = copy(PrivacyModel._meta.get_field('anonymised'))
+        # field.contribute_to_class(model, 'anonymised')
 
         # Make the managers subclass PrivacyManager
         # TODO: loop through all managers

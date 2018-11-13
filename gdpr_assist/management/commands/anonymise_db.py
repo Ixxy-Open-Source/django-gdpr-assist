@@ -35,7 +35,20 @@ Are you sure you want to do this?
 
         if confirm == 'yes':
             for model in registry.models.keys():
-                model.objects.all().anonymise()
+                to_anonymise = model.objects.all()
+
+                should_clear_table = getattr(model._privacy_meta, 'should_clear_table', [])
+                if should_clear_table:
+                    self.stdout.write('{}. Clearing {} objects. '.format(model, to_anonymise.count()))
+                    to_anonymise.delete()
+                    continue
+                
+                excludes_queries = getattr(model._privacy_meta, 'excludes_queries', [])
+                if excludes_queries:
+                    for exclud_query in excludes_queries:
+                        to_anonymise = to_anonymise.exclude(**exclud_query)
+                self.stdout.write('{} {} objects to anonymise. '.format(model, to_anonymise.count()))
+                to_anonymise.anonymise()
 
             msg = "{} models anonymised.".format(len(registry.models.keys()))
             self.stdout.write(msg)
